@@ -32,7 +32,11 @@ RUN pnpm install --frozen-lockfile --prod=false
 COPY . .
 
 # Build application
-RUN pnpm run build
+RUN --mount=type=secret,id=SPOTIFY_CLIENT_SECRET \
+    --mount=type=secret,id=SPOTIFY_CLIENT_ID \
+    SPOTIFY_CLIENT_SECRET="$(cat /run/secrets/SPOTIFY_CLIENT_SECRET)" \
+    SPOTIFY_CLIENT_ID="$(cat /run/secrets/SPOTIFY_CLIENT_ID)" \
+    pnpm run build
 
 # Remove development dependencies
 RUN pnpm prune --prod
