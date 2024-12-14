@@ -1,4 +1,5 @@
 import { SPOTIFY_CLIENT_ID } from '$env/static/private';
+import { PUBLIC_BASE_URL } from '$env/static/public';
 import { redirect } from '@sveltejs/kit';
 
 export const actions = {
@@ -16,7 +17,7 @@ export const actions = {
 			response_type: 'code',
 			client_id: SPOTIFY_CLIENT_ID,
 			scope: scope,
-			redirect_uri: 'http://localhost:5173/auth/callback',
+			redirect_uri: `${PUBLIC_BASE_URL}/auth/callback`,
 			state: state
 		});
 

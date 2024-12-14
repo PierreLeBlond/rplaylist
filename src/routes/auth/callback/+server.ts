@@ -1,4 +1,5 @@
 import { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET } from '$env/static/private';
+import { PUBLIC_BASE_URL } from '$env/static/public';
 import { redirect } from '@sveltejs/kit';
 
 export const GET = async ({ fetch, url, cookies }) => {
@@ -14,7 +15,7 @@ export const GET = async ({ fetch, url, cookies }) => {
 		body: new URLSearchParams({
 			grant_type: 'authorization_code',
 			code: code,
-			redirect_uri: 'http://localhost:5173/auth/callback'
+			redirect_uri: `${PUBLIC_BASE_URL}/auth/callback`
 		})
 	});
 	const body = await response.json();

@@ -31,6 +31,8 @@ RUN pnpm install --frozen-lockfile --prod=false
 # Copy application code
 COPY . .
 
+ENV PUBLIC_BASE_URL="https://rplaylist.fly.dev"
+
 # Build application
 RUN --mount=type=secret,id=SPOTIFY_CLIENT_SECRET \
     --mount=type=secret,id=SPOTIFY_CLIENT_ID \
