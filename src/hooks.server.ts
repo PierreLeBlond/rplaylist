@@ -2,6 +2,7 @@ import { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET } from '$env/static/private';
 import { redirect } from '@sveltejs/kit';
 
 export const handle = async ({ event, resolve }) => {
+
 	if (event.url.pathname === '/login' || event.url.pathname === '/auth/callback') {
 		return resolve(event);
 	}
@@ -30,7 +31,6 @@ export const handle = async ({ event, resolve }) => {
 		const body = await response.json();
 
 		if (body.error) {
-			console.error(body.error);
 			throw redirect(301, '/login');
 		}
 

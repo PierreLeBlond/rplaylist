@@ -1,8 +1,5 @@
-import { get } from 'http';
-
 const getStateData = async (response: any) => {
 	let error: any;
-	console.log(response);
 	switch (response.status) {
 		case 200:
 			const state = response
@@ -142,12 +139,12 @@ const playPlaylist = async ({
 	fetch,
 	token,
 	uri,
-	trackUri
+	position
 }: {
 	fetch: any;
 	token: string;
 	uri: string;
-	trackUri: string;
+	position: string;
 }) => {
 	await fetch('https://api.spotify.com/v1/me/player/shuffle?state=true', {
 		method: 'PUT',
@@ -170,7 +167,7 @@ const playPlaylist = async ({
 		},
 		body: JSON.stringify({
 			context_uri: uri,
-			offset: trackUri ? { uri: trackUri } : undefined
+			offset: { position }
 		})
 	}).catch((error: any) => {
 		console.error('While playing playlist : ', error);
@@ -225,8 +222,8 @@ export const actions = {
 	playPlaylist: async ({ fetch, locals, request }) => {
 		const data = await request.formData();
 		const uri = data.get('uri') as string;
-		const trackUri = data.get('trackUri') as string;
-		return playPlaylist({ fetch, token: locals.token, uri, trackUri });
+		const position = data.get('position') as string;
+		return playPlaylist({ fetch, token: locals.token, uri, position });
 	},
 	setVolume: async ({ fetch, locals, request }) => {
 		const data = await request.formData();

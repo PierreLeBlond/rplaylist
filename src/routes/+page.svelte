@@ -3,15 +3,13 @@
 	import type { PageData } from './$types';
 	import { cn } from '$lib/utils';
 	import { applyAction, enhance } from '$app/forms';
-	import { invalidate, invalidateAll } from '$app/navigation';
+	import { invalidateAll } from '$app/navigation';
 
 	type Props = {
 		data: PageData;
 	};
 
 	let { data }: Props = $props();
-
-	$inspect(data.state);
 
 	let optimisticCurrentPlaylistId = $state(null);
 	let currentPlaylistId = $derived.by(() => {
@@ -34,44 +32,6 @@
 
 		return data.state?.is_playing;
 	});
-
-	const playlistContexts: any = $state({});
-
-	const setVolume = async (volume: number) => {
-		const formData = new FormData();
-		formData.append('volume', volume.toString());
-		await fetch('?/setVolume', {
-			method: 'POST',
-			body: formData
-		});
-	};
-
-	$effect(() => {
-		const lastContext = data.state?.context?.type == 'playlist' ? data.state.context : null;
-
-		if (lastContext) {
-			const uri = data.state.context.uri;
-			localStorage.setItem(
-				`playlist_${uri}`,
-				JSON.stringify({
-					trackUri: data.state.item.uri,
-					time: data.state.progress_ms
-				})
-			);
-		}
-
-		data.playlists.forEach((playlist) => {
-			const uri = playlist.uri;
-			const stored = localStorage.getItem(`playlist_${uri}`);
-			if (stored) {
-				const { trackUri, time } = JSON.parse(stored);
-				playlistContexts[uri] = {
-					trackUri,
-					time
-				};
-			}
-		});
-	});
 </script>
 
 <section class="flex h-full w-full items-center justify-center bg-yellow-900">
@@ -87,6 +47,7 @@
 		<div class="col-span-3 grid grid-cols-2 gap-4 p-4">
 			{#each data.playlists as playlist (playlist.uri)}
 				{@const image = playlist.images?.[0].url}
+				{@const position = Math.floor(Math.random() * playlist.tracks.total)}
 				<form
 					method="POST"
 					action="?/playPlaylist"
@@ -100,7 +61,7 @@
 						}}
 				>
 					<input hidden name="uri" value={playlist.uri} />
-					<input hidden name="trackUri" value={playlistContexts[playlist.uri]?.trackUri} />
+					<input hidden name="position" value={position} />
 					<button
 						type="submit"
 						disabled={playlist.id === currentPlaylistId}

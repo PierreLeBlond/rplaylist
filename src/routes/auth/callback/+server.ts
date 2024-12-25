@@ -21,6 +21,7 @@ export const GET = async ({ fetch, url, cookies }) => {
 	const body = await response.json();
 
 	if (body.error) {
+		console.error(body.error);
 		throw redirect(301, '/login');
 	}
 
@@ -34,5 +35,5 @@ export const GET = async ({ fetch, url, cookies }) => {
 		httpOnly: true
 	});
 
-	return redirect(301, '/');
+	redirect(301, '/');
 };
