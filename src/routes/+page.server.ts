@@ -1,9 +1,11 @@
-const getStateData = async (response: any) => {
-	let error: any;
+import type { Actions } from '@sveltejs/kit';
+
+const getStateData = async (response: Response) => {
+	let error: Error;
 	switch (response.status) {
 		case 200:
 			const state = response
-				? await response.json().catch((error: any) => {
+				? await response.json().catch((error: Error) => {
 						console.error("While retrieving player's state body : ", error);
 						return null;
 					})
@@ -35,7 +37,7 @@ const getState = async ({ fetch, token }: { fetch: any; token: string }) => {
 		headers: {
 			Authorization: 'Bearer ' + token
 		}
-	}).catch((error: any) => {
+	}).catch((error: Error) => {
 		console.error("While getting player's state : ", error);
 		return null;
 	});
@@ -48,20 +50,20 @@ const getPlaylist = async ({ fetch, token, id }: { fetch: any; token: string; id
 		headers: {
 			Authorization: 'Bearer ' + token
 		}
-	}).catch((error: any) => {
+	}).catch((error: Error) => {
 		console.error('While getting playlist : ', error);
 		return null;
 	});
 	const playlist = response
 		? await response
 				.json()
-				.catch((error: any) => console.error('While retrieving playlist body : ', error))
+				.catch((error: Error) => console.error('While retrieving playlist body : ', error))
 		: null;
 	return playlist;
 };
 
-const getPlayData = async (response: any) => {
-	let error: any;
+const getPlayData = async (response: Response) => {
+	let error: Error;
 	switch (response.status) {
 		case 204:
 			return {};
@@ -83,68 +85,20 @@ const getPlayData = async (response: any) => {
 	}
 };
 
-const play = async ({ fetch, token }: { fetch: any; token: string }) => {
-	const response = await fetch('https://api.spotify.com/v1/me/player/play', {
-		method: 'PUT',
-		headers: {
-			Authorization: 'Bearer ' + token
-		}
-	}).catch((error: any) => {
-		console.error("While setting player's state on play : ", error);
-	});
-
-	return getPlayData(response);
-};
-
-const pause = async ({ fetch, token }: { fetch: any; token: string }) => {
-	const response = await fetch('https://api.spotify.com/v1/me/player/pause', {
-		method: 'PUT',
-		headers: {
-			Authorization: 'Bearer ' + token
-		}
-	}).catch((error: any) => {
-		console.error("While setting player's state on pause : ", error);
-	});
-
-	return getPlayData(response);
-};
-
-const previous = async ({ fetch, token }: { fetch: any; token: string }) => {
-	const response = await fetch('https://api.spotify.com/v1/me/player/previous', {
-		method: 'POST',
-		headers: {
-			Authorization: 'Bearer ' + token
-		}
-	}).catch((error: any) => {
-		console.error("While setting player's state on previous : ", error);
-	});
-
-	return getPlayData(response);
-};
-
-const next = async ({ fetch, token }: { fetch: any; token: string }) => {
-	const response = await fetch('https://api.spotify.com/v1/me/player/next', {
-		method: 'POST',
-		headers: {
-			Authorization: 'Bearer ' + token
-		}
-	}).catch((error: any) => {
-		console.error("While setting player's state on next : ", error);
-	});
-
-	return getPlayData(response);
-};
-
 const playPlaylist = async ({
 	fetch,
 	token,
 	uri,
-	position
+	trackUri,
+	time,
+	deviceId
 }: {
 	fetch: any;
 	token: string;
 	uri: string;
-	position: string;
+	trackUri: string;
+	time: number;
+	deviceId: string;
 }) => {
 	await fetch('https://api.spotify.com/v1/me/player/shuffle?state=true', {
 		method: 'PUT',
@@ -160,74 +114,90 @@ const playPlaylist = async ({
 		}
 	});
 
-	const response = await fetch('https://api.spotify.com/v1/me/player/play', {
+	const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
 		method: 'PUT',
 		headers: {
 			Authorization: 'Bearer ' + token
 		},
 		body: JSON.stringify({
 			context_uri: uri,
-			offset: { position }
+			offset: trackUri ? { uri: trackUri } : undefined,
+			position_ms: time
 		})
-	}).catch((error: any) => {
+	}).catch((error: Error) => {
 		console.error('While playing playlist : ', error);
 	});
 
 	return getPlayData(response);
 };
 
-const setVolume = async ({
-	fetch,
-	token,
-	volume
-}: {
-	fetch: any;
-	token: string;
-	volume: string;
-}) => {
-	await fetch(`https://api.spotify.com/v1/me/player/volume?volume_percent=${volume}`, {
-		method: 'PUT',
-		headers: {
-			Authorization: 'Bearer ' + token
-		}
-	}).catch((error: any) => {
-		console.error('While setting volume : ', error);
-	});
-};
-
 export const load = async ({ fetch, locals }) => {
 	const state = await getState({ fetch, token: locals.token });
 
-	const playlistUids = [
-		'79AHgSwbYY0ExsYSQXjkLb',
-		'5yijD2k37RNfgJ3c6kKafJ',
-		'3hRgR7rI0S9CFe7tIlUItS',
-		'4w1hqN8LtQAmEa7RPUgZ0R',
-		'6zy0N8zNbGXxatyzNnrjlw',
-		'0ElaMkg6JuiV7wHKjmBk1D'
+	const playlistDatas = [
+		{
+			keepPosition: true,
+			id: '79AHgSwbYY0ExsYSQXjkLb'
+		},
+		{
+			keepPosition: true,
+			id: '5yijD2k37RNfgJ3c6kKafJ'
+		},
+		{
+			keepPosition: true,
+			id: '3hRgR7rI0S9CFe7tIlUItS'
+		},
+		{
+			keepPosition: false,
+			id: '4w1hqN8LtQAmEa7RPUgZ0R'
+		},
+		{
+			keepPosition: true,
+			id: '6zy0N8zNbGXxatyzNnrjlw'
+		},
+		{
+			keepPosition: true,
+			id: '0ElaMkg6JuiV7wHKjmBk1D'
+		}
 	];
 
 	const playlists = await Promise.all(
-		playlistUids.map((id: string) => getPlaylist({ fetch, token: locals.token, id }))
+		playlistDatas.map(async ({ id, keepPosition }: { id: string; keepPosition: boolean }) => {
+			const playlist = await getPlaylist({ fetch, token: locals.token, id });
+			return {
+				...playlist,
+				keepPosition
+			};
+		})
 	);
 
-	return { state, playlists };
+	return { state, playlists, token: locals.token };
 };
 
-export const actions = {
-	play: async ({ fetch, locals }) => play({ fetch, token: locals.token }),
-	pause: async ({ fetch, locals }) => pause({ fetch, token: locals.token }),
-	previous: async ({ fetch, locals }) => previous({ fetch, token: locals.token }),
-	next: async ({ fetch, locals }) => next({ fetch, token: locals.token }),
+export const actions: Actions = {
 	playPlaylist: async ({ fetch, locals, request }) => {
 		const data = await request.formData();
 		const uri = data.get('uri') as string;
-		const position = data.get('position') as string;
-		return playPlaylist({ fetch, token: locals.token, uri, position });
+		const trackUri = data.get('trackUri') as string;
+		const time = Number(data.get('time'));
+		const deviceId = data.get('deviceId') as string;
+
+		return playPlaylist({ fetch, token: locals.token, uri, trackUri, time, deviceId });
 	},
-	setVolume: async ({ fetch, locals, request }) => {
+	device: async ({ request, locals }) => {
 		const data = await request.formData();
-		const volume = data.get('volume') as string;
-		const result = await setVolume({ fetch, token: locals.token, volume });
+		const id = data.get('id') as string;
+		await fetch('https://api.spotify.com/v1/me/player', {
+			method: 'PUT',
+			headers: {
+				Authorization: 'Bearer ' + locals.token
+			},
+			body: JSON.stringify({
+				device_ids: [id],
+				play: true
+			})
+		}).catch((error: Error) => {
+			console.error('While setting device : ', error);
+		});
 	}
 };

@@ -1,9 +1,15 @@
 <script lang="ts">
-	import { DoorOpen, Pause, Play, SkipBack, SkipForward } from 'lucide-svelte';
+	import { DoorOpen } from 'lucide-svelte';
 	import type { PageData } from './$types';
 	import { cn } from '$lib/utils';
-	import { applyAction, enhance } from '$app/forms';
+	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import Player from '$lib/components/player/Player.svelte';
+	import Spinner from '$lib/components/loaders/Spinner.svelte';
+	import { fadeIn } from '$lib/fade/fadeIn';
+	import { fadeOut } from '$lib/fade/fadeOut';
+	import type { ActionResult } from '@sveltejs/kit';
 
 	type Props = {
 		data: PageData;
@@ -11,7 +17,10 @@
 
 	let { data }: Props = $props();
 
-	let optimisticCurrentPlaylistId = $state(null);
+	let player: Spotify.Player | null = $state(null);
+	let playerId: string | null = $state(null);
+
+	let optimisticCurrentPlaylistId: string | null = $state(null);
 	let currentPlaylistId = $derived.by(() => {
 		if (optimisticCurrentPlaylistId !== null) {
 			return optimisticCurrentPlaylistId;
@@ -24,22 +33,114 @@
 		return data.state.context.uri.split(':')[2];
 	});
 
-	let optimisticIsPlaying: boolean | null = $state(null);
-	let isPlaying = $derived.by(() => {
-		if (optimisticIsPlaying !== null) {
-			return optimisticIsPlaying;
+	const playlistContexts: { [uri: string]: { trackUri: string; time: number } } = $state({});
+
+	$effect(() => {
+		const lastContext = data.state?.context?.type == 'playlist' ? data.state.context : null;
+
+		if (lastContext) {
+			const uri = data.state.context.uri;
+			localStorage.setItem(
+				`playlist_${uri}`,
+				JSON.stringify({
+					trackUri: data.state.item.uri,
+					time: data.state.progress_ms
+				})
+			);
 		}
 
-		return data.state?.is_playing;
+		data.playlists.forEach((playlist) => {
+			const uri = playlist.uri;
+			const stored = localStorage.getItem(`playlist_${uri}`);
+			if (stored) {
+				const { trackUri, time } = JSON.parse(stored);
+				playlistContexts[uri] = {
+					trackUri,
+					time
+				};
+			}
+		});
 	});
+
+	onMount(() => {
+		const script = document.createElement('script');
+		script.src = 'https://sdk.scdn.co/spotify-player.js';
+		script.async = true;
+
+		document.body.appendChild(script);
+
+		window.onSpotifyWebPlaybackSDKReady = () => {
+			player = new window.Spotify.Player({
+				name: 'rplaylist',
+				getOAuthToken: (cb) => {
+					cb(data.token);
+				},
+				volume: 1
+			});
+
+			player.addListener('autoplay_failed', () => {
+				console.error('Autoplay failed');
+			});
+
+			player.on('playback_error', ({ message }) => {
+				console.error('Failed to perform playback', message);
+			});
+
+			player.addListener('ready', ({ device_id }) => {
+				playerId = device_id;
+			});
+
+			player.addListener('not_ready', () => {
+				playerId = null;
+			});
+
+			player.connect();
+		};
+
+		return () => {
+			if (!player) {
+				return;
+			}
+			player.disconnect();
+		};
+	});
+
+	const handleSubmit = async (event: SubmitEvent, playlistId: string) => {
+		event.preventDefault();
+		if (!player) {
+			return;
+		}
+
+		const target = event.target as HTMLFormElement;
+
+		optimisticCurrentPlaylistId = playlistId;
+		const data = new FormData(target);
+
+		await fadeOut(player);
+		const response = await fetch(target.action, {
+			method: 'POST',
+			body: data
+		});
+
+		const result: ActionResult = deserialize(await response.text());
+
+		if (result.type === 'success') {
+			// rerun all `load` functions, following the successful update
+			await invalidateAll();
+		}
+
+		await fadeIn(player);
+
+		applyAction(result);
+	};
 </script>
 
-<section class="flex h-full w-full items-center justify-center bg-yellow-900">
+<section class="flex h-full w-full items-center justify-center bg-background">
 	<div class="grid w-64 grid-cols-3 gap-4">
 		<form action="/auth/logout" method="POST" class="col-span-3 flex justify-center">
 			<button
 				type="submit"
-				class="rounded-full bg-red-800 p-4 text-yellow-100 shadow shadow-red-950"
+				class="rounded-full bg-destructive p-4 text-destructive-foreground shadow shadow-red-950"
 			>
 				<DoorOpen></DoorOpen>
 			</button>
@@ -52,16 +153,20 @@
 					method="POST"
 					action="?/playPlaylist"
 					class="flex justify-center"
-					use:enhance={() =>
-						async ({ result }) => {
-							optimisticCurrentPlaylistId = playlist.id;
-							optimisticIsPlaying = true;
-							invalidateAll();
-							return applyAction(result);
-						}}
+					onsubmit={(event: SubmitEvent) => handleSubmit(event, playlist.id)}
 				>
 					<input hidden name="uri" value={playlist.uri} />
-					<input hidden name="position" value={position} />
+					<input
+						hidden
+						name="trackUri"
+						value={playlist.keepPosition ? playlistContexts[playlist.uri]?.trackUri : undefined}
+					/>
+					<input
+						hidden
+						name="time"
+						value={playlist.keepPosition ? playlistContexts[playlist.uri]?.time : undefined}
+					/>
+					<input hidden name="deviceId" value={playerId} />
 					<button
 						type="submit"
 						disabled={playlist.id === currentPlaylistId}
@@ -81,50 +186,14 @@
 				</form>
 			{/each}
 		</div>
-		<div class="col-span-3 p-2 text-center font-bold text-yellow-100">
-			{#if data.state?.device}
-				<p>listening on {data.state.device.name}</p>
+		<div
+			class="col-span-3 flex h-48 flex-col items-center justify-center gap-8 p-2 font-bold text-foreground"
+		>
+			{#if player}
+				<Player {player} {playerId} deviceId={data.state?.device.id} />
 			{:else}
-				<p>No device is connected, connect one and reload the page</p>
+				<Spinner size={8}></Spinner>
 			{/if}
-		</div>
-		<div class="col-span-3 flex items-center justify-center gap-4">
-			<form method="POST" action="?/previous" use:enhance>
-				<button
-					type="submit"
-					class="rounded-full bg-yellow-800 p-4 text-yellow-100 shadow shadow-yellow-950"
-				>
-					<SkipBack></SkipBack>
-				</button>
-			</form>
-			<form
-				method="POST"
-				action={isPlaying ? '?/pause' : '?/play'}
-				use:enhance={() =>
-					async ({ result }) => {
-						optimisticIsPlaying = !isPlaying;
-						return applyAction(result);
-					}}
-			>
-				<button
-					type="submit"
-					class="rounded-full bg-yellow-800 p-4 text-yellow-100 shadow shadow-yellow-950"
-				>
-					{#if isPlaying}
-						<Pause></Pause>
-					{:else}
-						<Play></Play>
-					{/if}
-				</button>
-			</form>
-			<form method="POST" action="?/next" use:enhance>
-				<button
-					type="submit"
-					class="rounded-full bg-yellow-800 p-4 text-yellow-100 shadow shadow-yellow-950"
-				>
-					<SkipForward></SkipForward>
-				</button>
-			</form>
 		</div>
 	</div>
 </section>
