@@ -1,38 +1,32 @@
-# sv
+# r-playlist
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+## About
 
-## Creating a project
+A simple interface to switch between playlists in Spotify.
+The playlists are hardcoded for now from my Spotify account, and meant to be used for table-top role-playing sessions.
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Development
 
-```bash
-# create a new project in the current directory
-npx sv create
+### Environment
 
-# create a new project in my-app
-npx sv create my-app
-```
+You'll need to provide the following environment variables:
 
-## Developing
+- SPOTIFY_CLIENT_ID: your Spotify client id
+- SPOTIFY_CLIENT_SECRET: your Spotify client secret
+- PUBLIC_BASE_URL: the base url of your app, e.g. http://localhost:5173
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+### Commands
 
-```bash
-npm run dev
+`pnpm i`
+`pnpm run dev`
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+## Deployment
 
-## Building
+On pushing on the remote github repository, a github action will trigger and deploy the project on fly.io.
 
-To create a production version of your app:
+You'll need to add fly.io related environment variables to github repository secrets:
 
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+- FLY_API_TOKEN: your fly.io api token
+  As well as the Spotify environment variables:
+- SPOTIFY_CLIENT_ID: your Spotify client id
+- SPOTIFY_CLIENT_SECRET: your Spotify client secret

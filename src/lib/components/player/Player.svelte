@@ -34,14 +34,14 @@
 <div class="col-span-3 flex items-center justify-center gap-4">
 	<button
 		type="button"
-		class="rounded-full bg-secondary p-4 text-primary shadow shadow-yellow-950"
+		class="bg-secondary text-primary rounded-full p-4 shadow shadow-yellow-950"
 		onclick={() => player.previousTrack()}
 	>
 		<SkipBack></SkipBack>
 	</button>
 	<button
 		type="button"
-		class="rounded-full bg-secondary p-4 text-primary shadow shadow-yellow-950"
+		class="bg-secondary text-primary rounded-full p-4 shadow shadow-yellow-950"
 		onclick={() => player.togglePlay()}
 	>
 		{#if isPlaying}
@@ -52,7 +52,7 @@
 	</button>
 	<button
 		type="button"
-		class="rounded-full bg-secondary p-4 text-primary shadow shadow-yellow-950"
+		class="bg-secondary text-primary rounded-full p-4 shadow shadow-yellow-950"
 		onclick={() => player.nextTrack()}
 	>
 		<SkipForward></SkipForward>
@@ -60,9 +60,10 @@
 </div>
 
 <Slider
+	type="single"
 	min={0}
 	max={1}
 	step={0.01}
-	value={[1]}
-	onValueChange={(value: number[]) => player?.setVolume(value[0])}
+	value={1}
+	onValueChange={(value: number) => player?.setVolume(value)}
 ></Slider>
