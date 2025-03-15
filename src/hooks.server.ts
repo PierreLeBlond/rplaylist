@@ -1,20 +1,29 @@
 import { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET } from '$env/static/private';
 import { redirect } from '@sveltejs/kit';
+import { logger } from '$lib/services/logger';
+import { getAuthTokens, getCookieOptions, setAuthTokens } from '$lib/cookies/auth';
 
 export const handle = async ({ event, resolve }) => {
+	logger.debug('Hook called for path', {
+		path: event.url.pathname,
+		cookies: event.cookies.getAll()
+	});
 
 	if (event.url.pathname === '/login' || event.url.pathname === '/auth/callback') {
 		return resolve(event);
 	}
 
-	let accessToken = event.cookies.get('access_token') as string;
-	const refreshToken = event.cookies.get('refresh_token') as string;
+	const authTokens = getAuthTokens(event.cookies);
 
-	if (!accessToken && !refreshToken) {
-		throw redirect(301, '/login');
+	logger.debug('Token state in hook', authTokens);
+
+	if (!authTokens.accessToken && !authTokens.refreshToken) {
+		logger.info('No access token or refresh token found');
+		return redirect(301, '/login');
 	}
 
-	if (!accessToken) {
+	if (!authTokens.accessToken) {
+		logger.info('No access token found, refreshing');
 		const response = await fetch('https://accounts.spotify.com/api/token', {
 			method: 'POST',
 			headers: {
@@ -24,7 +33,7 @@ export const handle = async ({ event, resolve }) => {
 			},
 			body: new URLSearchParams({
 				grant_type: 'refresh_token',
-				refresh_token: refreshToken
+				refresh_token: authTokens.refreshToken as string
 			})
 		});
 
@@ -34,23 +43,22 @@ export const handle = async ({ event, resolve }) => {
 			throw redirect(301, '/login');
 		}
 
-		event.cookies.set('access_token', body.access_token, {
-			path: '/',
-			httpOnly: true,
-			expires: new Date(new Date().getTime() + body.expires_in * 10)
+		setAuthTokens(event.cookies, event.url.protocol, {
+			accessToken: body.access_token,
+			refreshToken: body.refresh_token || authTokens.refreshToken,
+			expiresIn: body.expires_in
 		});
 
 		if (body.refresh_token) {
-			event.cookies.set('refresh_token', body.refresh_token, {
-				path: '/',
-				httpOnly: true
-			});
+			event.cookies.set('refresh_token', body.refresh_token, getCookieOptions(event.url.protocol));
 		}
 
-		accessToken = body.access_token;
+		event.locals.token = body.access_token;
+	} else {
+		event.locals.token = authTokens.accessToken;
 	}
 
-	event.locals.token = accessToken;
+	logger.info('Access token set');
 
 	const response = await resolve(event);
 

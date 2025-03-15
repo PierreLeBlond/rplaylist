@@ -1,9 +1,13 @@
 import { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET } from '$env/static/private';
 import { PUBLIC_BASE_URL } from '$env/static/public';
 import { redirect } from '@sveltejs/kit';
+import { logger } from '$lib/services/logger';
+import { setAuthTokens } from '$lib/cookies/auth';
 
 export const GET = async ({ fetch, url, cookies }) => {
 	const code = url.searchParams.get('code') as string;
+
+	logger.info('Received Spotify callback');
 
 	const response = await fetch('https://accounts.spotify.com/api/token', {
 		method: 'POST',
@@ -21,19 +25,15 @@ export const GET = async ({ fetch, url, cookies }) => {
 	const body = await response.json();
 
 	if (body.error) {
-		console.error(body.error);
+		logger.error(body.error);
 		throw redirect(301, '/login');
 	}
 
-	cookies.set('access_token', body.access_token, {
-		path: '/',
-		httpOnly: true,
-		expires: new Date(new Date().getTime() + body.expires_in * 10)
-	});
-	cookies.set('refresh_token', body.refresh_token, {
-		path: '/',
-		httpOnly: true
+	setAuthTokens(cookies, url.protocol, {
+		accessToken: body.access_token,
+		refreshToken: body.refresh_token,
+		expiresIn: body.expires_in
 	});
 
-	redirect(301, '/');
+	throw redirect(301, '/');
 };

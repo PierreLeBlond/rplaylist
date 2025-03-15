@@ -1,3 +1,4 @@
+import { logger } from '$lib/services/logger.js';
 import type { Actions } from '@sveltejs/kit';
 
 const getStateData = async (response: Response) => {
@@ -6,28 +7,28 @@ const getStateData = async (response: Response) => {
 		case 200:
 			const state = response
 				? await response.json().catch((error: Error) => {
-						console.error("While retrieving player's state body : ", error);
+						logger.error("While retrieving player's state body : ", { error });
 						return null;
 					})
 				: null;
 			return state;
 		case 204:
-			console.error('Playback not available or active');
+			logger.error('Playback not available or active');
 			return null;
 		case 401:
 			error = await response.json();
-			console.error('Bad or expired token : ', error);
+			logger.error('Bad or expired token : ', { error });
 			return null;
 		case 403:
 			error = await response.json();
-			console.error('Bad Oauth request : ', error);
+			logger.error('Bad Oauth request : ', { error });
 			return null;
 		case 429:
 			error = await response.json();
-			console.error('Too many requests : ', error);
+			logger.error('Too many requests : ', { error });
 			return null;
 		default:
-			console.error('Unknown error');
+			logger.error('Unknown error');
 			return null;
 	}
 };
@@ -38,7 +39,7 @@ const getState = async ({ fetch, token }: { fetch: any; token: string }) => {
 			Authorization: 'Bearer ' + token
 		}
 	}).catch((error: Error) => {
-		console.error("While getting player's state : ", error);
+		logger.error("While getting player's state : ", { error });
 		return null;
 	});
 
@@ -51,13 +52,13 @@ const getPlaylist = async ({ fetch, token, id }: { fetch: any; token: string; id
 			Authorization: 'Bearer ' + token
 		}
 	}).catch((error: Error) => {
-		console.error('While getting playlist : ', error);
+		logger.error('While getting playlist : ', { error });
 		return null;
 	});
 	const playlist = response
 		? await response
 				.json()
-				.catch((error: Error) => console.error('While retrieving playlist body : ', error))
+				.catch((error: Error) => logger.error('While retrieving playlist body : ', { error }))
 		: null;
 	return playlist;
 };
@@ -69,18 +70,18 @@ const getPlayData = async (response: Response) => {
 			return {};
 		case 401:
 			error = await response.json();
-			console.error('Bad or expired token : ', error);
+			logger.error('Bad or expired token : ', { error });
 			return null;
 		case 403:
 			error = await response.json();
-			console.error('Bad Oauth request : ', error);
+			logger.error('Bad Oauth request : ', { error });
 			return null;
 		case 429:
 			error = await response.json();
-			console.error('Too many requests : ', error);
+			logger.error('Too many requests : ', { error });
 			return null;
 		default:
-			console.error('Unknown error : ', response);
+			logger.error('Unknown error : ', { response });
 			return null;
 	}
 };
@@ -125,7 +126,7 @@ const playPlaylist = async ({
 			position_ms: time
 		})
 	}).catch((error: Error) => {
-		console.error('While playing playlist : ', error);
+		logger.error('While playing playlist : ', { error });
 	});
 
 	return getPlayData(response);
@@ -197,7 +198,7 @@ export const actions: Actions = {
 				play: true
 			})
 		}).catch((error: Error) => {
-			console.error('While setting device : ', error);
+			logger.error('While setting device : ', { error });
 		});
 	}
 };

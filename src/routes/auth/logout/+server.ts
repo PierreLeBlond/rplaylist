@@ -1,6 +1,12 @@
-import { redirect } from '@sveltejs/kit';
+import { clearAuthTokens } from '$lib/cookies/auth';
 
-export const POST = async ({ cookies }) => {
-	cookies.delete('access_token', { path: '/' });
-	return redirect(301, '/login');
+export const POST = async ({ cookies, url }) => {
+	clearAuthTokens(cookies, url.protocol);
+
+	return new Response(null, {
+		status: 302,
+		headers: {
+			Location: '/login'
+		}
+	});
 };

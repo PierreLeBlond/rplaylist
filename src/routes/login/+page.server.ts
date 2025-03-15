@@ -1,6 +1,17 @@
 import { SPOTIFY_CLIENT_ID } from '$env/static/private';
 import { PUBLIC_BASE_URL } from '$env/static/public';
+import { logger } from '$lib/services/logger.js';
 import { redirect } from '@sveltejs/kit';
+
+export const load = async ({ cookies }) => {
+	const accessToken = cookies.get('access_token');
+	const refreshToken = cookies.get('refresh_token');
+
+	if (accessToken || refreshToken) {
+		logger.info('User already logged in, redirecting to home');
+		throw redirect(301, '/');
+	}
+};
 
 export const actions = {
 	login: async () => {
@@ -20,6 +31,8 @@ export const actions = {
 			redirect_uri: `${PUBLIC_BASE_URL}/auth/callback`,
 			state: state
 		});
+
+		logger.info('Redirecting to Spotify login');
 
 		return redirect(
 			301,

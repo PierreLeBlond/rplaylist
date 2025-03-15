@@ -10,12 +10,15 @@
 	import { fadeIn } from '$lib/fade/fadeIn';
 	import { fadeOut } from '$lib/fade/fadeOut';
 	import type { ActionResult } from '@sveltejs/kit';
+	import { useLogger } from '$lib/hooks/useLogger';
 
 	type Props = {
 		data: PageData;
 	};
 
 	let { data }: Props = $props();
+
+	const logger = useLogger();
 
 	let player: Spotify.Player | null = $state(null);
 	let playerId: string | null = $state(null);
@@ -79,11 +82,11 @@
 			});
 
 			player.addListener('autoplay_failed', () => {
-				console.error('Autoplay failed');
+				logger.error('Autoplay failed');
 			});
 
 			player.on('playback_error', ({ message }) => {
-				console.error('Failed to perform playback', message);
+				logger.error('Failed to perform playback', { message });
 			});
 
 			player.addListener('ready', ({ device_id }) => {
@@ -135,12 +138,12 @@
 	};
 </script>
 
-<section class="flex h-full w-full items-center justify-center bg-background">
+<section class="bg-background flex h-full w-full items-center justify-center">
 	<div class="grid w-64 grid-cols-3 gap-4">
 		<form action="/auth/logout" method="POST" class="col-span-3 flex justify-center">
 			<button
 				type="submit"
-				class="rounded-full bg-destructive p-4 text-destructive-foreground shadow shadow-red-950"
+				class="bg-destructive text-destructive-foreground rounded-full p-4 shadow shadow-red-950"
 			>
 				<DoorOpen></DoorOpen>
 			</button>
@@ -148,7 +151,6 @@
 		<div class="col-span-3 grid grid-cols-2 gap-4 p-4">
 			{#each data.playlists as playlist (playlist.uri)}
 				{@const image = playlist.images?.[0].url}
-				{@const position = Math.floor(Math.random() * playlist.tracks.total)}
 				<form
 					method="POST"
 					action="?/playPlaylist"
@@ -187,7 +189,7 @@
 			{/each}
 		</div>
 		<div
-			class="col-span-3 flex h-48 flex-col items-center justify-center gap-8 p-2 font-bold text-foreground"
+			class="text-foreground col-span-3 flex h-48 flex-col items-center justify-center gap-8 p-2 font-bold"
 		>
 			{#if player}
 				<Player {player} {playerId} deviceId={data.state?.device.id} />
