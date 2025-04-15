@@ -16,7 +16,7 @@ const config = {
 			$lib: './src/lib/*'
 		},
 		paths: {
-			base: '/rplaylist'
+			base: process.env.PUBLIC_BASE_PATH || ''
 		}
 	}
 };
