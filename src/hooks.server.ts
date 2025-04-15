@@ -2,9 +2,10 @@ import { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET } from '$env/static/private';
 import { redirect } from '@sveltejs/kit';
 import { logger } from '$lib/services/logger';
 import { getAuthTokens, getCookieOptions, setAuthTokens } from '$lib/cookies/auth';
+import { PUBLIC_BASE_PATH } from '$env/static/public';
 
 export const handle = async ({ event, resolve }) => {
-	if (event.url.pathname === '/login' || event.url.pathname === '/auth/callback') {
+	if (event.url.pathname === `/${PUBLIC_BASE_PATH}/login` || event.url.pathname === `/${PUBLIC_BASE_PATH}/auth/callback`) {
 		return resolve(event);
 	}
 
@@ -12,7 +13,7 @@ export const handle = async ({ event, resolve }) => {
 
 	if (!authTokens.accessToken && !authTokens.refreshToken) {
 		logger.info('No access token or refresh token found');
-		return redirect(301, '/login');
+		return redirect(301, `/${PUBLIC_BASE_PATH}/login`);
 	}
 
 	if (!authTokens.accessToken) {
@@ -33,7 +34,7 @@ export const handle = async ({ event, resolve }) => {
 		const body = await response.json();
 
 		if (body.error) {
-			throw redirect(301, '/login');
+			throw redirect(301, `/${PUBLIC_BASE_PATH}/login`);
 		}
 
 		setAuthTokens(event.cookies, event.url.protocol, {
