@@ -1,5 +1,5 @@
 import { SPOTIFY_CLIENT_ID } from '$env/static/private';
-import { PUBLIC_BASE_URL } from '$env/static/public';
+import { PUBLIC_BASE_URL, PUBLIC_BASE_PATH } from '$env/static/public';
 import { logger } from '$lib/services/logger.js';
 import { redirect } from '@sveltejs/kit';
 
@@ -9,7 +9,7 @@ export const load = async ({ cookies }) => {
 
 	if (accessToken || refreshToken) {
 		logger.info('User already logged in, redirecting to home');
-		throw redirect(301, '/');
+		throw redirect(301, `${PUBLIC_BASE_PATH}/`);
 	}
 };
 

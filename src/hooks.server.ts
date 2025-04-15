@@ -13,7 +13,7 @@ export const handle = async ({ event, resolve }) => {
 
 	if (!authTokens.accessToken && !authTokens.refreshToken) {
 		logger.info('No access token or refresh token found');
-		return redirect(301, `/${PUBLIC_BASE_PATH}/login`);
+		return redirect(301, `${PUBLIC_BASE_PATH}/login`);
 	}
 
 	if (!authTokens.accessToken) {
@@ -34,7 +34,7 @@ export const handle = async ({ event, resolve }) => {
 		const body = await response.json();
 
 		if (body.error) {
-			throw redirect(301, `/${PUBLIC_BASE_PATH}/login`);
+			throw redirect(301, `${PUBLIC_BASE_PATH}/login`);
 		}
 
 		setAuthTokens(event.cookies, event.url.protocol, {
