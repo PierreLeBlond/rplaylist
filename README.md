@@ -14,6 +14,7 @@ You'll need to provide the following environment variables:
 - SPOTIFY_CLIENT_ID: your Spotify client id
 - SPOTIFY_CLIENT_SECRET: your Spotify client secret
 - PUBLIC_BASE_URL: the base url of your app, e.g. http://localhost:5173
+- PUBLIC_BASE_PATH
 
 ### Commands
 
@@ -29,8 +30,3 @@ You'll need to add planethoster ftp related environment variables to github repo
 - FTP_SERVER
 - FTP_USERNAME
 - FTP_PASSWORD
-
-  As well as the Spotify environment variables:
-
-- SPOTIFY_CLIENT_ID: your Spotify client id
-- SPOTIFY_CLIENT_SECRET: your Spotify client secret

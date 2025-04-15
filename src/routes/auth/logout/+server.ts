@@ -1,4 +1,5 @@
 import { clearAuthTokens } from '$lib/cookies/auth';
+import { PUBLIC_BASE_PATH } from '$env/static/public';
 
 export const POST = async ({ cookies, url }) => {
 	clearAuthTokens(cookies, url.protocol);
@@ -6,7 +7,7 @@ export const POST = async ({ cookies, url }) => {
 	return new Response(null, {
 		status: 302,
 		headers: {
-			Location: '/login'
+			Location: `${PUBLIC_BASE_PATH}/login`
 		}
 	});
 };

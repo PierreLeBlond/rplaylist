@@ -1,4 +1,4 @@
-import { SPOTIFY_CLIENT_ID } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { PUBLIC_BASE_URL, PUBLIC_BASE_PATH } from '$env/static/public';
 import { logger } from '$lib/services/logger.js';
 import { redirect } from '@sveltejs/kit';
@@ -26,7 +26,7 @@ export const actions = {
 
 		const auth_query_parameters = new URLSearchParams({
 			response_type: 'code',
-			client_id: SPOTIFY_CLIENT_ID,
+			client_id: env.SPOTIFY_CLIENT_ID,
 			scope: scope,
 			redirect_uri: `${PUBLIC_BASE_URL}/auth/callback`,
 			state: state

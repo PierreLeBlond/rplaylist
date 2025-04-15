@@ -1,11 +1,14 @@
-import { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { redirect } from '@sveltejs/kit';
 import { logger } from '$lib/services/logger';
 import { getAuthTokens, getCookieOptions, setAuthTokens } from '$lib/cookies/auth';
 import { PUBLIC_BASE_PATH } from '$env/static/public';
 
 export const handle = async ({ event, resolve }) => {
-	if (event.url.pathname === `/${PUBLIC_BASE_PATH}/login` || event.url.pathname === `/${PUBLIC_BASE_PATH}/auth/callback`) {
+	if (
+		event.url.pathname === `${PUBLIC_BASE_PATH}/login` ||
+		event.url.pathname === `${PUBLIC_BASE_PATH}/auth/callback`
+	) {
 		return resolve(event);
 	}
 
@@ -23,7 +26,8 @@ export const handle = async ({ event, resolve }) => {
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded',
 				Authorization:
-					'Basic ' + Buffer.from(SPOTIFY_CLIENT_ID + ':' + SPOTIFY_CLIENT_SECRET).toString('base64')
+					'Basic ' +
+					Buffer.from(env.SPOTIFY_CLIENT_ID + ':' + env.SPOTIFY_CLIENT_SECRET).toString('base64')
 			},
 			body: new URLSearchParams({
 				grant_type: 'refresh_token',
