@@ -1,5 +1,6 @@
 import adapter from '@sveltejs/adapter-node';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import { PUBLIC_BASE_PATH } from '$env/static/public';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -14,6 +15,9 @@ const config = {
 		adapter: adapter(),
 		alias: {
 			$lib: './src/lib/*'
+		},
+		paths: {
+			base: PUBLIC_BASE_PATH
 		}
 	}
 };

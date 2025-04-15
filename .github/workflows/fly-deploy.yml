@@ -19,7 +19,8 @@ jobs:
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
-          PUBLIC_BASE_PATH: /rplaylist
+          PUBLIC_BASE_URL: 'https://app.pierrelespingal.xyz/rplaylist'
+          PUBLIC_BASE_PATH: '/rplaylist'
         run: npm run build
 
       - name: Sync files
