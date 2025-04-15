@@ -4,18 +4,11 @@ import { logger } from '$lib/services/logger';
 import { getAuthTokens, getCookieOptions, setAuthTokens } from '$lib/cookies/auth';
 
 export const handle = async ({ event, resolve }) => {
-	logger.debug('Hook called for path', {
-		path: event.url.pathname,
-		cookies: event.cookies.getAll()
-	});
-
 	if (event.url.pathname === '/login' || event.url.pathname === '/auth/callback') {
 		return resolve(event);
 	}
 
 	const authTokens = getAuthTokens(event.cookies);
-
-	logger.debug('Token state in hook', authTokens);
 
 	if (!authTokens.accessToken && !authTokens.refreshToken) {
 		logger.info('No access token or refresh token found');

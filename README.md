@@ -17,16 +17,20 @@ You'll need to provide the following environment variables:
 
 ### Commands
 
-`pnpm i`
-`pnpm run dev`
+`npm i`
+`npm run dev`
 
 ## Deployment
 
-On pushing on the remote github repository, a github action will trigger and deploy the project on fly.io.
+On pushing on the remote github repository, a github action will trigger and deploy the project on planethoster.
 
-You'll need to add fly.io related environment variables to github repository secrets:
+You'll need to add planethoster ftp related environment variables to github repository secrets:
 
-- FLY_API_TOKEN: your fly.io api token
+- FTP_SERVER
+- FTP_USERNAME
+- FTP_PASSWORD
+
   As well as the Spotify environment variables:
+
 - SPOTIFY_CLIENT_ID: your Spotify client id
 - SPOTIFY_CLIENT_SECRET: your Spotify client secret
