@@ -1,3 +1,8 @@
+import dotenv from 'dotenv';
+
+// We load dynamic env variables
+dotenv.config();
+
 // We wrap sveltekit generated index.js to avoid some passenger error with top level await
 async function startServer() {
 	try {

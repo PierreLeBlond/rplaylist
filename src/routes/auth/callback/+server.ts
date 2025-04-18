@@ -2,7 +2,7 @@ import { PUBLIC_BASE_URL, PUBLIC_BASE_PATH } from '$env/static/public';
 import { redirect } from '@sveltejs/kit';
 import { logger } from '$lib/services/logger';
 import { setAuthTokens } from '$lib/cookies/auth';
-import { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 export const GET = async ({ fetch, url, cookies }) => {
 	const code = url.searchParams.get('code') as string;
@@ -14,7 +14,8 @@ export const GET = async ({ fetch, url, cookies }) => {
 		headers: {
 			'Content-Type': 'application/x-www-form-urlencoded',
 			Authorization:
-				'Basic ' + Buffer.from(SPOTIFY_CLIENT_ID + ':' + SPOTIFY_CLIENT_SECRET).toString('base64')
+				'Basic ' +
+				Buffer.from(env.SPOTIFY_CLIENT_ID + ':' + env.SPOTIFY_CLIENT_SECRET).toString('base64')
 		},
 		body: new URLSearchParams({
 			grant_type: 'authorization_code',
